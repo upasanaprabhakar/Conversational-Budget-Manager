@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rounded square background with gradient -->
+  <rect width="512" height="512" rx="115" fill="url(#paint0_linear)"/>
+  
+  <!-- Dollar sign symbol -->
+  <g transform="translate(256, 256)">
+    <!-- Vertical line through dollar sign -->
+    <rect x="-18" y="-180" width="36" height="360" rx="18" fill="white"/>
+    
+    <!-- Top curve of $ -->
+    <path d="M 80 -90 C 80 -130, 40 -150, -20 -150 C -80 -150, -100 -130, -100 -90 C -100 -50, -60 -30, 0 -20" 
+          stroke="white" 
+          stroke-width="36" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+          fill="none"/>
+    
+    <!-- Bottom curve of $ -->
+    <path d="M 0 20 C 60 30, 100 50, 100 90 C 100 130, 80 150, 20 150 C -40 150, -80 130, -80 90" 
+          stroke="white" 
+          stroke-width="36" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+          fill="none"/>
+  </g>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="paint0_linear" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+</svg>
