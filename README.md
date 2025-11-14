@@ -1,4 +1,4 @@
-# BudgetAI: Smart Finance Manager
+# BudgetAI: Conversational Budget Manager
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/Status-In%20Progress-yellow)](https://github.com/upasanaprabhakar/Conversational-Buget-Manager)
