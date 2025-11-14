@@ -1,14 +1,23 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, Send, TrendingUp, DollarSign, ShoppingBag, Car, Film, Heart, Zap, Menu, Bell, Home, BarChart3, Settings, User, MessageSquare, PieChart, Trash2, Edit2, X, Check, Calendar, Filter, ArrowUpDown, UtensilsCrossed, Activity } from 'lucide-react';
 import voiceService from './services/voiceService';
 import { processVoiceCommand } from './utils/voiceCommandProcessor';
+=======
+import React, { useState, useEffect } from 'react';
+import { Mic, Send, TrendingUp, DollarSign, ShoppingBag, Car, Film, Heart, Zap, Menu, Bell, Home, BarChart3, Settings, User, MessageSquare, PieChart, Trash2, Edit2, X, Check, Calendar, Filter, ArrowUpDown, UtensilsCrossed, Activity } from 'lucide-react';
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
 
 const BudgetManager = () => {
   const [currentScreen, setCurrentScreen] = useState('chat');
   const [isListening, setIsListening] = useState(false);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([
+<<<<<<< HEAD
     { type: 'ai', text: 'Hi! I\'m your voice-enabled budget assistant powered by Agora AI. I can help you: Log expenses ("Spent 250 on lunch"), Navigate ("Show dashboard"), Change settings ("Switch to USD"), Set budgets ("Set food budget 3000"), and answer questions ("Show budget"). Try saying "Help" for more commands!', time: '10:30 AM' }
+=======
+    { type: 'ai', text: 'Hi! I\'m your budget assistant. Tell me about your expenses like "Spent 250 on lunch" or ask me for savings tips!', time: '10:30 AM' }
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
   ]);
   const [expenses, setExpenses] = useState([]);
   const [currency, setCurrency] = useState('INR');
@@ -31,6 +40,7 @@ const BudgetManager = () => {
   const [filterCategory, setFilterCategory] = useState('All');
   const [sortBy, setSortBy] = useState('date');
   const [aiSuggestions, setAiSuggestions] = useState([]);
+<<<<<<< HEAD
   const [voiceError, setVoiceError] = useState(null);
   const voiceServiceRef = useRef(null);
   
@@ -56,6 +66,8 @@ const BudgetManager = () => {
   useEffect(() => {
     savingsGoalRef.current = savingsGoal;
   }, [savingsGoal]);
+=======
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
 
   const getCurrentTime = () => {
     const now = new Date();
@@ -108,6 +120,7 @@ const BudgetManager = () => {
   };
 
   const logExpense = (amount, category, description) => {
+<<<<<<< HEAD
     let resultText = '';
     
     setBudget(prevBudget => {
@@ -129,6 +142,18 @@ const BudgetManager = () => {
       
       return newBudget;
     });
+=======
+    const newBudget = { ...budget };
+    
+    if (!newBudget.categories[category]) {
+      console.error(`Category ${category} not found.`);
+      return null;
+    }
+    
+    newBudget.categories[category].spent += amount;
+    newBudget.spent += amount;
+    setBudget(newBudget);
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
 
     const newExpense = {
       id: Date.now(),
@@ -140,7 +165,15 @@ const BudgetManager = () => {
     };
     setExpenses(prev => [...prev, newExpense]);
 
+<<<<<<< HEAD
     return resultText;
+=======
+    const weeklySpent = newBudget.categories[category].spent;
+    const categoryLimit = newBudget.categories[category].limit;
+    const percentage = categoryLimit > 0 ? Math.round((weeklySpent / categoryLimit) * 100) : 0;
+
+    return `Logged! ${formatAmount(amount)} added to ${category} category. You've spent ${formatAmount(weeklySpent)} on ${category.toLowerCase()} ${categoryLimit > 0 ? `(${percentage}% of budget)` : ''}.`;
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
   };
 
   const generateAISuggestions = () => {
@@ -240,6 +273,7 @@ const BudgetManager = () => {
     generateAISuggestions();
   }, [budget, expenses, currency, savingsGoal, currentSavings]);
 
+<<<<<<< HEAD
   // Initialize voice service
   useEffect(() => {
     if (!voiceService.isAvailable()) {
@@ -477,6 +511,37 @@ const BudgetManager = () => {
         time: getCurrentTime()
       };
       
+=======
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
+
+    const userMessage = { type: 'user', text: inputText, time: getCurrentTime() };
+    setMessages(prev => [...prev, userMessage]);
+
+    const expenseData = parseExpenseFromText(inputText);
+    
+    if (expenseData) {
+      const { amount, category } = expenseData;
+      const aiResponseText = logExpense(amount, category, inputText);
+
+      if (aiResponseText) {
+        const aiResponse = {
+          type: 'ai',
+          text: aiResponseText,
+          time: getCurrentTime()
+        };
+        
+        setTimeout(() => {
+          setMessages(prev => [...prev, aiResponse]);
+        }, 500);
+      }
+    } else {
+      const aiResponse = {
+        type: 'ai',
+        text: 'I can help you track expenses! Try saying something like "Spent 250 on lunch" or "Invested 1000 in mutual fund"',
+        time: getCurrentTime()
+      };
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
       setTimeout(() => {
         setMessages(prev => [...prev, aiResponse]);
       }, 500);
@@ -485,6 +550,7 @@ const BudgetManager = () => {
     setInputText('');
   };
 
+<<<<<<< HEAD
   const handleVoiceClick = async () => {
     if (!voiceService.isAvailable()) {
       setVoiceError('Voice recognition is not available in this browser.');
@@ -511,6 +577,15 @@ const BudgetManager = () => {
         setIsListening(false);
       }
     }
+=======
+  const handleVoiceClick = () => {
+    setIsListening(true);
+    
+    setTimeout(() => {
+      setIsListening(false);
+      setInputText('Spent 250 on lunch');
+    }, 3000);
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
   };
 
   const handleKeyPress = (e) => {
@@ -622,6 +697,7 @@ const BudgetManager = () => {
   const spentPercentage = budget.total > 0 ? (budget.spent / budget.total) * 100 : 0;
 
   return (
+<<<<<<< HEAD
     <div className="app-container">
       <div className="sidebar">
         <div className="sidebar-header">
@@ -639,18 +715,50 @@ const BudgetManager = () => {
             <button
               onClick={() => setCurrency('INR')}
               className={`currency-btn ${currency === 'INR' ? 'active' : ''}`}
+=======
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50 w-full overflow-hidden">
+      <div className="w-72 bg-white border-r border-gray-200 shadow-xl flex flex-col flex-shrink-0">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <DollarSign size={28} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">BudgetAI</h1>
+              <p className="text-xs text-gray-500">Smart Finance Manager</p>
+            </div>
+          </div>
+          
+          <div className="mt-4 flex items-center gap-2 bg-gray-50 rounded-xl p-2">
+            <button
+              onClick={() => setCurrency('INR')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                currency === 'INR'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
             >
               ₹ INR
             </button>
             <button
               onClick={() => setCurrency('USD')}
+<<<<<<< HEAD
               className={`currency-btn ${currency === 'USD' ? 'active' : ''}`}
+=======
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                currency === 'USD'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
             >
               $ USD
             </button>
           </div>
         </div>
 
+<<<<<<< HEAD
         <nav className="sidebar-nav">
           <button
             onClick={() => setCurrentScreen('chat')}
@@ -690,11 +798,69 @@ const BudgetManager = () => {
             <div className="flex-1">
               <p className="user-name">User</p>
               <p className="user-plan">Premium Plan</p>
+=======
+        <nav className="flex-1 p-4">
+          <button
+            onClick={() => setCurrentScreen('chat')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all ${
+              currentScreen === 'chat'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <MessageSquare size={20} />
+            <span className="font-medium">Chat Assistant</span>
+          </button>
+          <button
+            onClick={() => setCurrentScreen('dashboard')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all ${
+              currentScreen === 'dashboard'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <PieChart size={20} />
+            <span className="font-medium">Dashboard</span>
+          </button>
+          <button
+            onClick={() => setCurrentScreen('expenses')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all ${
+              currentScreen === 'expenses'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <BarChart3 size={20} />
+            <span className="font-medium">All Expenses</span>
+          </button>
+          <button
+            onClick={() => setCurrentScreen('settings')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all ${
+              currentScreen === 'settings'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Settings size={20} />
+            <span className="font-medium">Budget Settings</span>
+          </button>
+        </nav>
+
+        <div className="p-4 border-t border-gray-200">
+          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+              U
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-800">User</p>
+              <p className="text-xs text-gray-500">Premium Plan</p>
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
             </div>
           </div>
         </div>
       </div>
 
+<<<<<<< HEAD
       <div className="main-content">
         {currentScreen === 'chat' && (
           <>
@@ -724,11 +890,43 @@ const BudgetManager = () => {
                   <div className="stat-card stat-card-purple">
                     <p className="stat-label">Savings Goal</p>
                     <p className="stat-value stat-value-purple">{formatAmount(savingsGoal)}</p>
+=======
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {currentScreen === 'chat' && (
+          <>
+            <div className="bg-white border-b border-gray-200 shadow-sm">
+              <div className="px-8 py-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-800">Conversational Budget Assistant</h2>
+                    <p className="text-gray-500 mt-1">Track expenses naturally through conversation</p>
+                  </div>
+                  <Bell size={24} className="text-gray-400 cursor-pointer hover:text-gray-600" />
+                </div>
+                
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100">
+                    <p className="text-sm text-gray-600 mb-1">Monthly Budget</p>
+                    <p className="text-3xl font-bold text-blue-600">{formatAmount(budget.total)}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-orange-50 to-red-50 p-5 rounded-2xl border border-orange-100">
+                    <p className="text-sm text-gray-600 mb-1">Total Spent</p>
+                    <p className="text-3xl font-bold text-orange-600">{formatAmount(budget.spent)}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-5 rounded-2xl border border-green-100">
+                    <p className="text-sm text-gray-600 mb-1">Remaining</p>
+                    <p className="text-3xl font-bold text-green-600">{formatAmount(remaining)}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-5 rounded-2xl border border-purple-100">
+                    <p className="text-sm text-gray-600 mb-1">Savings Goal</p>
+                    <p className="text-3xl font-bold text-purple-600">{formatAmount(savingsGoal)}</p>
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                   </div>
                 </div>
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="chat-messages">
               <div className="messages-container messages-spacing">
                 {aiSuggestions.length > 0 && (
@@ -767,6 +965,39 @@ const BudgetManager = () => {
                                 <button 
                                   onClick={() => handleSuggestionAction(suggestion)}
                                   className="suggestion-action"
+=======
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="max-w-4xl mx-auto space-y-6">
+                {aiSuggestions.length > 0 && (
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-6 border-2 border-indigo-200 shadow-xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
+                        <Zap size={24} className="text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-800">AI-Powered Suggestions</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {aiSuggestions.map((suggestion, idx) => {
+                        const IconComp = suggestion.icon;
+                        return (
+                          <div key={suggestion.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all relative">
+                            <button 
+                              onClick={() => dismissSuggestion(suggestion.id)}
+                              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-all z-10"
+                            >
+                              <X size={18} />
+                            </button>
+                            <div className="flex items-start gap-4">
+                              <div className={`w-12 h-12 bg-gradient-to-br ${suggestion.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                <IconComp size={24} className="text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-bold text-gray-800 mb-1">{suggestion.title}</h4>
+                                <p className="text-sm text-gray-600 mb-3">{suggestion.description}</p>
+                                <button 
+                                  onClick={() => handleSuggestionAction(suggestion)}
+                                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                                 >
                                   {suggestion.action} →
                                 </button>
@@ -780,10 +1011,21 @@ const BudgetManager = () => {
                 )}
                 
                 {messages.map((msg, idx) => (
+<<<<<<< HEAD
                   <div key={idx} className={`message-container ${msg.type === 'user' ? 'user' : 'ai'}`}>
                     <div className={`message-bubble ${msg.type === 'user' ? 'user' : 'ai'}`}>
                       <p className="message-text">{msg.text}</p>
                       <p className={`message-time ${msg.type === 'user' ? 'user' : 'ai'}`}>{msg.time}</p>
+=======
+                  <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-2xl ${
+                      msg.type === 'user' 
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white' 
+                        : 'bg-white text-gray-800 border border-gray-200'
+                    } rounded-2xl px-6 py-4 shadow-lg`}>
+                      <p className="text-base leading-relaxed">{msg.text}</p>
+                      <p className={`text-xs mt-2 ${msg.type === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>{msg.time}</p>
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                     </div>
                   </div>
                 ))}
@@ -791,16 +1033,26 @@ const BudgetManager = () => {
             </div>
 
             {isListening && (
+<<<<<<< HEAD
               <div className="voice-overlay">
                 <div className="voice-overlay-content">
                   <div className="voice-mic-container">
                     <div className="voice-mic-ping"></div>
                     <div className="voice-mic-pulse"></div>
                     <div className="voice-mic-icon">
+=======
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/95 via-indigo-900/95 to-purple-900/95 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="text-center">
+                  <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-20"></div>
+                    <div className="absolute inset-0 bg-blue-500 rounded-full animate-pulse opacity-30"></div>
+                    <div className="relative w-32 h-32 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-2xl mx-auto">
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                       <Mic size={56} className="text-white" />
                     </div>
                   </div>
                   
+<<<<<<< HEAD
                   <p className="voice-title">Listening...</p>
                   <p className="voice-subtitle">Speak naturally about your expense</p>
                   
@@ -809,6 +1061,16 @@ const BudgetManager = () => {
                       <div
                         key={i}
                         className="voice-bar"
+=======
+                  <p className="text-4xl font-bold text-white mb-3">Listening...</p>
+                  <p className="text-blue-200 text-lg mb-8">Speak naturally about your expense</p>
+                  
+                  <div className="flex items-center justify-center gap-2 h-20 mb-8">
+                    {[...Array(15)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-2 bg-gradient-to-t from-blue-400 to-blue-200 rounded-full animate-pulse"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                         style={{
                           height: `${Math.random() * 50 + 20}px`,
                           animationDelay: `${i * 0.1}s`
@@ -819,7 +1081,11 @@ const BudgetManager = () => {
 
                   <button
                     onClick={() => setIsListening(false)}
+<<<<<<< HEAD
                     className="voice-stop-btn"
+=======
+                    className="px-8 py-4 bg-red-500 text-white rounded-2xl font-semibold hover:bg-red-600 transition-all shadow-2xl"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                   >
                     Stop Listening
                   </button>
@@ -827,6 +1093,7 @@ const BudgetManager = () => {
               </div>
             )}
 
+<<<<<<< HEAD
             <div className="chat-input-container">
               {voiceError && (
                 <div className="voice-error">
@@ -835,25 +1102,42 @@ const BudgetManager = () => {
               )}
               <div className="input-wrapper">
                 <div className="input-group">
+=======
+            <div className="bg-white border-t border-gray-200 shadow-2xl p-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="flex items-center gap-4">
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                   <input
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Type your expense like 'Spent 250 on lunch' or 'Invested 1000 in stocks'..."
+<<<<<<< HEAD
                     className="text-input"
                   />
                   <button
                     onClick={handleSendMessage}
                     className="send-btn"
+=======
+                    className="flex-1 py-4 px-6 bg-gray-50 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-semibold hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                   >
                     <Send size={20} />
                     Send
                   </button>
                   <button
                     onClick={handleVoiceClick}
+<<<<<<< HEAD
                     className={`voice-btn ${isListening ? 'listening' : ''}`}
                     title={isListening ? 'Stop listening' : 'Start voice input'}
+=======
+                    className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl hover:shadow-2xl transition-all duration-200 hover:scale-105"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                   >
                     <Mic size={28} />
                   </button>
@@ -865,6 +1149,7 @@ const BudgetManager = () => {
 
         {currentScreen === 'dashboard' && (
           <>
+<<<<<<< HEAD
             <div className="dashboard-header">
               <h2 className="dashboard-title">Financial Dashboard</h2>
               <p className="dashboard-subtitle">Complete overview of your spending patterns</p>
@@ -905,6 +1190,48 @@ const BudgetManager = () => {
                         <div className="budget-progress-bar">
                           <div 
                             className="budget-progress-fill"
+=======
+            <div className="bg-white border-b border-gray-200 shadow-sm px-8 py-6">
+              <h2 className="text-3xl font-bold text-gray-800">Financial Dashboard</h2>
+              <p className="text-gray-500 mt-1">Complete overview of your spending patterns</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="grid grid-cols-12 gap-6">
+                <div className="col-span-12 lg:col-span-8">
+                  <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <p className="text-sm opacity-90 mb-2">Total Monthly Budget</p>
+                          <p className="text-6xl font-bold">{formatAmount(budget.total)}</p>
+                        </div>
+                        <DollarSign size={64} className="opacity-30" />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-6 mb-6">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                          <p className="text-sm opacity-80 mb-1">Spent This Month</p>
+                          <p className="text-3xl font-bold">{formatAmount(budget.spent)}</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                          <p className="text-sm opacity-80 mb-1">Remaining Balance</p>
+                          <p className="text-3xl font-bold">{formatAmount(remaining)}</p>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span>Budget Usage</span>
+                          <span className="font-bold">{Math.round(spentPercentage)}%</span>
+                        </div>
+                        <div className="w-full bg-white/20 rounded-full h-3">
+                          <div 
+                            className="bg-white rounded-full h-3 transition-all duration-500"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                             style={{ width: `${Math.min(spentPercentage, 100)}%` }}
                           ></div>
                         </div>
@@ -913,6 +1240,7 @@ const BudgetManager = () => {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 <div className="recent-expenses-card">
                   <div className="recent-expenses">
                     <h3 className="recent-expenses-title">Recent Expenses</h3>
@@ -939,6 +1267,27 @@ const BudgetManager = () => {
                                 <p className="expense-description">{expense.description}</p>
                               </div>
                               <p className="expense-amount">{formatAmount(expense.amount)}</p>
+=======
+                <div className="col-span-12 lg:col-span-4 space-y-6">
+                  <div className="bg-white rounded-3xl p-6 shadow-xl">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Expenses</h3>
+                    <div className="space-y-3">
+                      {getRecentExpenses().length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">No expenses yet</p>
+                      ) : (
+                        getRecentExpenses().map((expense) => {
+                          const IconComp = budget.categories[expense.category].icon;
+                          return (
+                            <div key={expense.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                              <div className={`w-10 h-10 bg-gradient-to-br ${budget.categories[expense.category].color} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                                <IconComp size={20} className="text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-gray-800 text-sm">{expense.category}</p>
+                                <p className="text-xs text-gray-500 truncate">{expense.description}</p>
+                              </div>
+                              <p className="font-bold text-gray-800">{formatAmount(expense.amount)}</p>
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                             </div>
                           );
                         })
@@ -947,6 +1296,7 @@ const BudgetManager = () => {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 <div className="category-breakdown">
                   <div className="category-breakdown-card">
                     <h3 className="category-breakdown-title">Category Breakdown</h3>
@@ -989,6 +1339,43 @@ const BudgetManager = () => {
                                     ></div>
                                   </div>
                                   <p className="category-progress-text">{Math.round(percentage)}% used</p>
+=======
+                <div className="col-span-12">
+                  <div className="bg-white rounded-3xl p-8 shadow-xl">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6">Category Breakdown</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {Object.entries(budget.categories).map(([name, cat]) => {
+                        const IconComp = cat.icon;
+                        const percentage = cat.limit > 0 ? (cat.spent / cat.limit) * 100 : 0;
+                        return (
+                          <div key={name} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-12 h-12 bg-gradient-to-br ${cat.color} rounded-xl flex items-center justify-center`}>
+                                  <IconComp size={24} className="text-white" />
+                                </div>
+                                <h4 className="font-bold text-gray-800">{name}</h4>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Spent</span>
+                                <span className="font-bold text-gray-800">{formatAmount(cat.spent)}</span>
+                              </div>
+                              {cat.limit > 0 && (
+                                <>
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Limit</span>
+                                    <span className="font-bold text-gray-800">{formatAmount(cat.limit)}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className={`bg-gradient-to-r ${cat.color} rounded-full h-2 transition-all duration-500`}
+                                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                  <p className="text-xs text-gray-500">{Math.round(percentage)}% used</p>
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                                 </>
                               )}
                             </div>
@@ -1005,6 +1392,7 @@ const BudgetManager = () => {
 
         {currentScreen === 'expenses' && (
           <>
+<<<<<<< HEAD
             <div className="expenses-header">
               <div className="expenses-header-content">
                 <div>
@@ -1016,6 +1404,19 @@ const BudgetManager = () => {
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
                     className="filter-select"
+=======
+            <div className="bg-white border-b border-gray-200 shadow-sm px-8 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-800">All Expenses</h2>
+                  <p className="text-gray-500 mt-1">Complete history of your transactions</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                   >
                     <option value="All">All Categories</option>
                     {Object.keys(budget.categories).map(cat => (
@@ -1025,7 +1426,11 @@ const BudgetManager = () => {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
+<<<<<<< HEAD
                     className="filter-select"
+=======
+                    className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                   >
                     <option value="date">Sort by Date</option>
                     <option value="amount">Sort by Amount</option>
@@ -1035,6 +1440,7 @@ const BudgetManager = () => {
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="expenses-content">
               <div className="expenses-container">
                 {getFilteredAndSortedExpenses().length === 0 ? (
@@ -1053,11 +1459,32 @@ const BudgetManager = () => {
                           <th>Description</th>
                           <th className="text-right">Amount</th>
                           <th className="text-right">Actions</th>
+=======
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="max-w-6xl mx-auto">
+                {getFilteredAndSortedExpenses().length === 0 ? (
+                  <div className="bg-white rounded-3xl p-12 text-center shadow-xl">
+                    <ShoppingBag size={64} className="mx-auto text-gray-300 mb-4" />
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">No expenses yet</h3>
+                    <p className="text-gray-500">Start tracking your expenses in the chat!</p>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Date</th>
+                          <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Category</th>
+                          <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Description</th>
+                          <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">Amount</th>
+                          <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">Actions</th>
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                         </tr>
                       </thead>
                       <tbody>
                         {getFilteredAndSortedExpenses().map((expense, idx) => {
                           const IconComp = budget.categories[expense.category].icon;
+<<<<<<< HEAD
                           const gradientClass = budget.categories[expense.category].color.includes('orange') ? 'gradient-orange' :
                                               budget.categories[expense.category].color.includes('blue') ? 'gradient-blue' :
                                               budget.categories[expense.category].color.includes('purple') ? 'gradient-purple' :
@@ -1082,6 +1509,25 @@ const BudgetManager = () => {
                                 <button
                                   onClick={() => deleteExpense(expense.id)}
                                   className="delete-btn"
+=======
+                          return (
+                            <tr key={expense.id} className={`border-t border-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                              <td className="px-6 py-4 text-sm text-gray-600">{expense.date}</td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-8 h-8 bg-gradient-to-br ${budget.categories[expense.category].color} rounded-lg flex items-center justify-center`}>
+                                    <IconComp size={16} className="text-white" />
+                                  </div>
+                                  <span className="font-semibold text-gray-800">{expense.category}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{expense.description}</td>
+                              <td className="px-6 py-4 text-right font-bold text-gray-800">{formatAmount(expense.amount)}</td>
+                              <td className="px-6 py-4 text-right">
+                                <button
+                                  onClick={() => deleteExpense(expense.id)}
+                                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                                 >
                                   <Trash2 size={18} />
                                 </button>
@@ -1100,6 +1546,7 @@ const BudgetManager = () => {
 
         {currentScreen === 'settings' && (
           <>
+<<<<<<< HEAD
             <div className="settings-header">
               <h2 className="settings-title">Budget Settings</h2>
               <p className="settings-subtitle">Customize your budget limits and goals</p>
@@ -1182,6 +1629,81 @@ const BudgetManager = () => {
                         <p className="savings-display-label">Your Goal</p>
                         <p className="savings-display-value">{formatAmount(savingsGoal)}</p>
                       </div>
+=======
+            <div className="bg-white border-b border-gray-200 shadow-sm px-8 py-6">
+              <h2 className="text-3xl font-bold text-gray-800">Budget Settings</h2>
+              <p className="text-gray-500 mt-1">Customize your budget limits and goals</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="max-w-4xl mx-auto space-y-6">
+                <div className="bg-white rounded-3xl p-8 shadow-xl">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-6">Category Limits</h3>
+                  <div className="space-y-4">
+                    {Object.entries(budget.categories).map(([name, cat]) => {
+                      const IconComp = cat.icon;
+                      return (
+                        <div key={name} className="flex items-center gap-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl">
+                          <div className={`w-12 h-12 bg-gradient-to-br ${cat.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                            <IconComp size={24} className="text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-bold text-gray-800">{name}</p>
+                            <p className="text-sm text-gray-500">Current limit: {formatAmount(cat.limit)}</p>
+                          </div>
+                          {editingCategory === name ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                value={editingLimit}
+                                onChange={(e) => setEditingLimit(e.target.value)}
+                                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="New limit"
+                              />
+                              <button
+                                onClick={() => updateCategoryLimit(name)}
+                                className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                              >
+                                <Check size={20} />
+                              </button>
+                              <button
+                                onClick={() => setEditingCategory(null)}
+                                className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                              >
+                                <X size={20} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startEditingCategory(name)}
+                              className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                            >
+                              <Edit2 size={20} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-3xl p-8 shadow-xl">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">Savings Goal</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Savings Target</label>
+                      <input
+                        type="number"
+                        value={savingsGoal}
+                        onChange={(e) => setSavingsGoal(parseInt(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter savings goal"
+                      />
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl">
+                      <p className="text-sm text-gray-600 mb-2">Your Goal</p>
+                      <p className="text-4xl font-bold text-purple-600">{formatAmount(savingsGoal)}</p>
+>>>>>>> 868cd35c96e4d439f823dfcdd61826bb59358874
                     </div>
                   </div>
                 </div>
