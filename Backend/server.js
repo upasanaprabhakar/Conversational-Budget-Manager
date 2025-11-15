@@ -7,7 +7,7 @@ import Budget from "./models/budget.js";
 import Expense from "./models/expense.js";
 import User from "./models/user.js";
 
-dotenv.config();
+dotenv.config(); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
