@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Mic, Send, TrendingUp, DollarSign, ShoppingBag, Car, Film, Heart, Zap, Menu, Bell, Home, BarChart3, Settings, User, MessageSquare, PieChart, Trash2, Edit2, X, Check, Calendar, Filter, ArrowUpDown, UtensilsCrossed, Activity } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+const USER_ID = '507f1f77bcf86cd799439011'; // Replace with actual user ID from auth
 
 const BudgetManager = () => {
   const [currentScreen, setCurrentScreen] = useState('chat');
   const [isListening, setIsListening] = useState(false);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([
-    { type: 'ai', text: 'Hi! I\'m your budget assistant. Tell me about your expenses like "Spent 250 on lunch" or ask me for savings tips!', time: '10:30 AM' }
+    { type: 'ai', text: 'Hi! I\'m your voice-enabled budget assistant. I can help you: Log expenses ("Spent 250 on lunch"), Navigate ("Show dashboard"), Change settings ("Switch to USD"), Set budgets ("Set food budget 3000"), and answer questions ("Show budget"). Try saying "Help" for more commands!', time: '10:30 AM' }
   ]);
   const [expenses, setExpenses] = useState([]);
   const [currency, setCurrency] = useState('INR');
@@ -29,6 +33,139 @@ const BudgetManager = () => {
   const [filterCategory, setFilterCategory] = useState('All');
   const [sortBy, setSortBy] = useState('date');
   const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [voiceError, setVoiceError] = useState(null);
+  const [recognition, setRecognition] = useState(null);
+  
+  // Refs to store latest state for voice callbacks (avoid closure issues)
+  const budgetRef = useRef(budget);
+  const expensesRef = useRef(expenses);
+  const currencyRef = useRef(currency);
+  const savingsGoalRef = useRef(savingsGoal);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    budgetRef.current = budget;
+  }, [budget]);
+  
+  useEffect(() => {
+    expensesRef.current = expenses;
+  }, [expenses]);
+  
+  useEffect(() => {
+    currencyRef.current = currency;
+  }, [currency]);
+  
+  useEffect(() => {
+    savingsGoalRef.current = savingsGoal;
+  }, [savingsGoal]);
+
+  // Icon mapping for categories
+  const iconMapping = {
+    Food: UtensilsCrossed,
+    Transport: Car,
+    Entertainment: Film,
+    Shopping: ShoppingBag,
+    Health: Activity,
+    Investment: TrendingUp
+  };
+
+  const colorMapping = {
+    Food: 'from-orange-400 to-orange-600',
+    Transport: 'from-blue-400 to-blue-600',
+    Entertainment: 'from-purple-400 to-purple-600',
+    Shopping: 'from-pink-400 to-pink-600',
+    Health: 'from-red-400 to-red-600',
+    Investment: 'from-green-400 to-emerald-600'
+  };
+
+  // Fetch budget from backend - FIXED VERSION
+const fetchBudget = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/budget/${USER_ID}`);
+    const result = await response.json();
+    
+    if (result.success) {
+      const backendBudget = result.data;
+      
+      // Helper function to safely get category data
+      const getCategoryData = (categoryName) => {
+        const backendCategory = backendBudget.categories[categoryName];
+        return {
+          spent: backendCategory?.spent || 0,
+          limit: backendCategory?.limit || 0
+        };
+      };
+      
+      setBudget({
+        total: backendBudget.totalBudget,
+        spent: backendBudget.totalSpent,
+        categories: {
+          Food: { 
+            ...getCategoryData('Food'),
+            icon: UtensilsCrossed,
+            color: 'from-orange-400 to-orange-600'
+          },
+          Transport: { 
+            ...getCategoryData('Transport'),
+            icon: Car,
+            color: 'from-blue-400 to-blue-600'
+          },
+          Entertainment: { 
+            ...getCategoryData('Entertainment'),
+            icon: Film,
+            color: 'from-purple-400 to-purple-600'
+          },
+          Shopping: { 
+            ...getCategoryData('Shopping'),
+            icon: ShoppingBag,
+            color: 'from-pink-400 to-pink-600'
+          },
+          Health: { 
+            ...getCategoryData('Health'),
+            icon: Activity,
+            color: 'from-red-400 to-red-600'
+          },
+          Investment: { 
+            ...getCategoryData('Investment'), // ← Now gets actual data from backend
+            icon: TrendingUp,
+            color: 'from-green-400 to-emerald-600'
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching budget:', error);
+  }
+};
+
+  // Fetch expenses from backend
+  const fetchExpenses = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/expenses/${USER_ID}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        const formattedExpenses = result.data.map(exp => ({
+          id: exp._id,
+          amount: exp.amount,
+          category: exp.category,
+          description: exp.description,
+          date: new Date(exp.date).toLocaleDateString(),
+          timestamp: new Date(exp.date).getTime()
+        }));
+        setExpenses(formattedExpenses);
+      }
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    }
+  };
+
+  // Load data on mount
+  useEffect(() => {
+    fetchBudget();
+    fetchExpenses();
+  }, []);
 
   const getCurrentTime = () => {
     const now = new Date();
@@ -47,6 +184,133 @@ const BudgetManager = () => {
   const formatAmount = (amount) => {
     const converted = convertAmount(amount);
     return `${getCurrencySymbol()}${parseFloat(converted).toLocaleString()}`;
+  };
+
+  // Voice command processor
+  const processVoiceCommand = (transcript, state) => {
+    const lowerText = transcript.toLowerCase().trim();
+    
+    console.log('Processing voice command:', lowerText);
+    
+    // Navigation commands
+    if (lowerText.includes('show dashboard') || lowerText.includes('open dashboard') || lowerText.includes('go to dashboard')) {
+      return { type: 'navigate', screen: 'dashboard', response: 'Opening dashboard...' };
+    }
+    
+    if (lowerText.includes('show expenses') || lowerText.includes('open expenses') || lowerText.includes('view expenses')) {
+      return { type: 'navigate', screen: 'expenses', response: 'Opening expenses list...' };
+    }
+    
+    if (lowerText.includes('show settings') || lowerText.includes('open settings')) {
+      return { type: 'navigate', screen: 'settings', response: 'Opening settings...' };
+    }
+    
+    if (lowerText.includes('show chat') || lowerText.includes('back to chat')) {
+      return { type: 'navigate', screen: 'chat', response: 'Opening chat...' };
+    }
+
+    // View information commands
+    if (lowerText.includes('how much have i spent') || lowerText.includes('what have i spent') || 
+        (lowerText.includes('total') && lowerText.includes('spent') && !lowerText.includes('budget'))) {
+      return {
+        type: 'info',
+        response: `You've spent a total of ${state.formatAmount(state.budget.spent)} out of your ${state.formatAmount(state.budget.total)} budget.`
+      };
+    }
+
+    if (lowerText.includes('show budget') || lowerText.includes('what is my budget')) {
+      const total = state.budget.total;
+      const spent = state.budget.spent;
+      const remaining = total - spent;
+      return {
+        type: 'info',
+        response: `Your total budget is ${state.formatAmount(total)}. You've spent ${state.formatAmount(spent)} and have ${state.formatAmount(remaining)} remaining.`
+      };
+    }
+
+    // Currency commands
+    if (lowerText.includes('change currency to usd') || lowerText.includes('switch to usd')) {
+      return { type: 'setCurrency', currency: 'USD', response: 'Currency changed to USD' };
+    }
+    
+    if (lowerText.includes('change currency to inr') || lowerText.includes('switch to inr')) {
+      return { type: 'setCurrency', currency: 'INR', response: 'Currency changed to INR' };
+    }
+
+    // Savings goal commands
+    if (lowerText.includes('savings') && lowerText.includes('goal')) {
+      const numbers = lowerText.match(/\d+/g);
+      if (numbers && numbers.length > 0) {
+        const goal = parseInt(numbers[numbers.length - 1]);
+        return {
+          type: 'setSavingsGoal',
+          goal,
+          response: `Savings goal set to ${state.formatAmount(goal)}`
+        };
+      }
+    }
+
+    // Budget limit commands
+    const setLimitMatch = lowerText.match(/set (food|transport|entertainment|shopping|health|investment) (?:budget|limit) (?:to|as)? (\d+)/);
+    if (setLimitMatch) {
+      const category = setLimitMatch[1].charAt(0).toUpperCase() + setLimitMatch[1].slice(1);
+      const limit = parseInt(setLimitMatch[2]);
+      return {
+        type: 'setCategoryLimit',
+        category,
+        limit,
+        response: `Set ${category} budget limit to ${state.formatAmount(limit)}`
+      };
+    }
+
+    // Help command
+    if (lowerText.includes('help') || lowerText.includes('what can you do')) {
+      return {
+        type: 'info',
+        response: 'I can help you: Log expenses (e.g., "Spent 250 on lunch"), View budget ("Show budget"), Navigate ("Show dashboard"), Change currency ("Switch to USD"), Set limits ("Set food budget 3000"), and more!'
+      };
+    }
+
+    // Expense logging
+    const expenseActionWords = ['spent', 'paid', 'bought', 'invested', 'used', 'cost', 'purchased'];
+    const hasExpenseAction = expenseActionWords.some(word => lowerText.includes(word));
+    
+    if (hasExpenseAction) {
+      const amountMatch = lowerText.match(/(\d+)/);
+      if (amountMatch) {
+        const amount = parseInt(amountMatch[1]);
+        let category = 'Shopping';
+        
+        if (lowerText.includes('lunch') || lowerText.includes('food') || lowerText.includes('dinner') ||
+            lowerText.includes('breakfast') || lowerText.includes('coffee') || lowerText.includes('restaurant')) {
+          category = 'Food';
+        } else if (lowerText.includes('uber') || lowerText.includes('cab') || lowerText.includes('transport') ||
+                   lowerText.includes('metro') || lowerText.includes('bus')) {
+          category = 'Transport';
+        } else if (lowerText.includes('movie') || lowerText.includes('entertainment') || lowerText.includes('game')) {
+          category = 'Entertainment';
+        } else if (lowerText.includes('medicine') || lowerText.includes('doctor') || lowerText.includes('health') ||
+                   lowerText.includes('gym')) {
+          category = 'Health';
+        } else if (lowerText.includes('invest') || lowerText.includes('stock') || lowerText.includes('mutual fund')) {
+          category = 'Investment';
+        }
+
+        return {
+          type: 'logExpense',
+          amount,
+          category,
+          description: transcript,
+          response: null
+        };
+      }
+    }
+
+    // Default response
+    return {
+      type: 'unknown',
+      response: 'I didn\'t understand that. Try saying "Spent 250 on lunch" to log an expense, or "Show budget" to view your budget.'
+    };
   };
 
   const parseExpenseFromText = (text) => {
@@ -80,33 +344,40 @@ const BudgetManager = () => {
     return { amount, category };
   };
 
-  const logExpense = (amount, category, description) => {
-    const newBudget = { ...budget };
-    
-    if (!newBudget.categories[category]) {
-      console.error(`Category ${category} not found.`);
-      return null;
+  const logExpense = async (amount, category, description) => {
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch(`${API_BASE_URL}/expenses/${USER_ID}/parse`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount,
+          category,
+          description,
+          entryMethod: 'text'
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state with backend data
+        await fetchBudget();
+        await fetchExpenses();
+        
+        return result.message;
+      } else {
+        return 'Failed to log expense. Please try again.';
+      }
+    } catch (error) {
+      console.error('Error logging expense:', error);
+      return 'Failed to log expense. Please try again.';
+    } finally {
+      setIsLoading(false);
     }
-    
-    newBudget.categories[category].spent += amount;
-    newBudget.spent += amount;
-    setBudget(newBudget);
-
-    const newExpense = {
-      id: Date.now(),
-      amount,
-      category,
-      description,
-      date: new Date().toLocaleDateString(),
-      timestamp: Date.now()
-    };
-    setExpenses(prev => [...prev, newExpense]);
-
-    const weeklySpent = newBudget.categories[category].spent;
-    const categoryLimit = newBudget.categories[category].limit;
-    const percentage = categoryLimit > 0 ? Math.round((weeklySpent / categoryLimit) * 100) : 0;
-
-    return `Logged! ${formatAmount(amount)} added to ${category} category. You've spent ${formatAmount(weeklySpent)} on ${category.toLowerCase()} ${categoryLimit > 0 ? `(${percentage}% of budget)` : ''}.`;
   };
 
   const generateAISuggestions = () => {
@@ -206,35 +477,255 @@ const BudgetManager = () => {
     generateAISuggestions();
   }, [budget, expenses, currency, savingsGoal, currentSavings]);
 
-  const handleSendMessage = () => {
+  // Initialize Web Speech API
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setVoiceError('Voice recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    const recognitionInstance = new SpeechRecognition();
+    recognitionInstance.continuous = false;
+    recognitionInstance.interimResults = false;
+    recognitionInstance.lang = 'en-US';
+
+    recognitionInstance.onstart = () => {
+      setIsListening(true);
+      setVoiceError(null);
+    };
+
+    recognitionInstance.onresult = async (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log('Voice transcript:', transcript);
+      setInputText(transcript);
+      setIsListening(false);
+      
+      // Process voice command
+      setTimeout(async () => {
+        if (transcript.trim()) {
+          const userMessage = { type: 'user', text: transcript, time: getCurrentTime() };
+          setMessages(prev => [...prev, userMessage]);
+
+          const command = processVoiceCommand(transcript, {
+            budget: budgetRef.current,
+            expenses: expensesRef.current,
+            currency: currencyRef.current,
+            savingsGoal: savingsGoalRef.current,
+            formatAmount
+          });
+
+          console.log('Command detected:', command.type, command);
+
+          let aiResponseText = '';
+
+          switch (command.type) {
+            case 'navigate':
+              setCurrentScreen(command.screen);
+              aiResponseText = command.response;
+              break;
+
+            case 'setCurrency':
+              setCurrency(command.currency);
+              aiResponseText = command.response;
+              break;
+
+            case 'setCategoryLimit':
+              const newLimit = command.limit;
+              const category = command.category;
+              const newBudget = { ...budgetRef.current };
+              newBudget.categories[category].limit = newLimit;
+              const newTotal = Object.values(newBudget.categories).reduce((sum, cat) => sum + cat.limit, 0);
+              
+              try {
+                const updatedCategories = {};
+                updatedCategories[category] = { limit: newLimit };
+
+                const response = await fetch(`${API_BASE_URL}/budget/${USER_ID}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    totalBudget: newTotal,
+                    categories: updatedCategories
+                  })
+                });
+
+                if (response.ok) {
+                  await fetchBudget();
+                }
+              } catch (error) {
+                console.error('Error updating budget:', error);
+              }
+              
+              aiResponseText = command.response;
+              break;
+
+            case 'setSavingsGoal':
+              setSavingsGoal(command.goal);
+              aiResponseText = command.response;
+              break;
+
+            case 'logExpense':
+              aiResponseText = await logExpense(command.amount, command.category, command.description);
+              break;
+
+            case 'info':
+              aiResponseText = command.response;
+              break;
+
+            case 'unknown':
+            default:
+              const expenseData = parseExpenseFromText(transcript);
+              if (expenseData) {
+                const { amount, category } = expenseData;
+                aiResponseText = await logExpense(amount, category, transcript);
+              } else {
+                aiResponseText = command.response;
+              }
+              break;
+          }
+
+          if (aiResponseText) {
+            const aiResponse = {
+              type: 'ai',
+              text: aiResponseText,
+              time: getCurrentTime()
+            };
+            
+            setTimeout(() => {
+              setMessages(prev => [...prev, aiResponse]);
+            }, 500);
+          }
+          
+          setInputText('');
+        }
+      }, 300);
+    };
+
+    recognitionInstance.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      
+      let errorMessage = 'Voice recognition error. Please try again.';
+      if (event.error === 'no-speech') {
+        errorMessage = 'No speech detected. Please try again.';
+      } else if (event.error === 'audio-capture') {
+        errorMessage = 'Microphone not found. Please check your microphone settings.';
+      } else if (event.error === 'not-allowed') {
+        errorMessage = 'Microphone permission denied. Please allow microphone access.';
+      }
+      
+      setVoiceError(errorMessage);
+      
+      setTimeout(() => {
+        setVoiceError(null);
+      }, 5000);
+    };
+
+    recognitionInstance.onend = () => {
+      setIsListening(false);
+    };
+
+    setRecognition(recognitionInstance);
+
+    return () => {
+      if (recognitionInstance) {
+        recognitionInstance.stop();
+      }
+    };
+  }, []);
+
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const userMessage = { type: 'user', text: inputText, time: getCurrentTime() };
     setMessages(prev => [...prev, userMessage]);
 
-    const expenseData = parseExpenseFromText(inputText);
-    
-    if (expenseData) {
-      const { amount, category } = expenseData;
-      const aiResponseText = logExpense(amount, category, inputText);
+    // Process text command using voice command processor
+    const command = processVoiceCommand(inputText, {
+      budget: budgetRef.current,
+      expenses: expensesRef.current,
+      currency: currencyRef.current,
+      savingsGoal: savingsGoalRef.current,
+      formatAmount
+    });
 
-      if (aiResponseText) {
-        const aiResponse = {
-          type: 'ai',
-          text: aiResponseText,
-          time: getCurrentTime()
-        };
+    let aiResponseText = '';
+
+    switch (command.type) {
+      case 'navigate':
+        setCurrentScreen(command.screen);
+        aiResponseText = command.response;
+        break;
+
+      case 'setCurrency':
+        setCurrency(command.currency);
+        aiResponseText = command.response;
+        break;
+
+      case 'setCategoryLimit':
+        const newLimit = command.limit;
+        const category = command.category;
+        const newBudget = { ...budgetRef.current };
+        newBudget.categories[category].limit = newLimit;
+        const newTotal = Object.values(newBudget.categories).reduce((sum, cat) => sum + cat.limit, 0);
         
-        setTimeout(() => {
-          setMessages(prev => [...prev, aiResponse]);
-        }, 500);
-      }
-    } else {
+        try {
+          const updatedCategories = {};
+          updatedCategories[category] = { limit: newLimit };
+
+          const response = await fetch(`${API_BASE_URL}/budget/${USER_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              totalBudget: newTotal,
+              categories: updatedCategories
+            })
+          });
+
+          if (response.ok) {
+            await fetchBudget();
+          }
+        } catch (error) {
+          console.error('Error updating budget:', error);
+        }
+        
+        aiResponseText = command.response;
+        break;
+
+      case 'setSavingsGoal':
+        setSavingsGoal(command.goal);
+        aiResponseText = command.response;
+        break;
+
+      case 'logExpense':
+        aiResponseText = await logExpense(command.amount, command.category, command.description);
+        break;
+
+      case 'info':
+        aiResponseText = command.response;
+        break;
+
+      case 'unknown':
+      default:
+        const expenseData = parseExpenseFromText(inputText);
+        if (expenseData) {
+          const { amount, category } = expenseData;
+          aiResponseText = await logExpense(amount, category, inputText);
+        } else {
+          aiResponseText = command.response;
+        }
+        break;
+    }
+
+    if (aiResponseText) {
       const aiResponse = {
         type: 'ai',
-        text: 'I can help you track expenses! Try saying something like "Spent 250 on lunch" or "Invested 1000 in mutual fund"',
+        text: aiResponseText,
         time: getCurrentTime()
       };
+      
       setTimeout(() => {
         setMessages(prev => [...prev, aiResponse]);
       }, 500);
@@ -243,13 +734,29 @@ const BudgetManager = () => {
     setInputText('');
   };
 
-  const handleVoiceClick = () => {
-    setIsListening(true);
-    
-    setTimeout(() => {
-      setIsListening(false);
-      setInputText('Spent 250 on lunch');
-    }, 3000);
+  const handleVoiceClick = async () => {
+    if (!recognition) {
+      setVoiceError('Voice recognition is not available in this browser.');
+      return;
+    }
+
+    if (isListening) {
+      try {
+        recognition.stop();
+        setIsListening(false);
+      } catch (error) {
+        console.error('Error stopping voice recognition:', error);
+        setIsListening(false);
+      }
+    } else {
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Error starting voice recognition:', error);
+        setVoiceError(error.message || 'Failed to start voice recognition. Please try again.');
+        setIsListening(false);
+      }
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -258,37 +765,130 @@ const BudgetManager = () => {
     }
   };
 
-  const deleteExpense = (expenseId) => {
-    const expense = expenses.find(e => e.id === expenseId);
-    if (expense) {
-      const newBudget = { ...budget };
-      newBudget.categories[expense.category].spent -= expense.amount;
-      newBudget.spent -= expense.amount;
-      setBudget(newBudget);
-      setExpenses(prev => prev.filter(e => e.id !== expenseId));
+  const deleteExpense = async (expenseId) => {
+  try {
+    console.log('🗑️ Deleting expense:', expenseId);
+    
+    const response = await fetch(`${API_BASE_URL}/expenses/${USER_ID}/${expenseId}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+    console.log('Delete response:', result);
+    
+    if (result.success) {
+      // Immediately update budget state with the returned budget
+      if (result.budget) {
+        console.log('📊 Updating budget after delete:', {
+          totalSpent: result.budget.totalSpent,
+          categories: result.budget.categories
+        });
+        
+        // Helper function to safely get category data
+        const getCategoryData = (categoryName) => {
+          const backendCategory = result.budget.categories[categoryName];
+          return {
+            spent: backendCategory?.spent || 0,
+            limit: backendCategory?.limit || 0
+          };
+        };
+        
+        // Update budget state immediately
+        setBudget({
+          total: result.budget.totalBudget,
+          spent: result.budget.totalSpent,
+          categories: {
+            Food: { 
+              ...getCategoryData('Food'),
+              icon: UtensilsCrossed,
+              color: 'from-orange-400 to-orange-600'
+            },
+            Transport: { 
+              ...getCategoryData('Transport'),
+              icon: Car,
+              color: 'from-blue-400 to-blue-600'
+            },
+            Entertainment: { 
+              ...getCategoryData('Entertainment'),
+              icon: Film,
+              color: 'from-purple-400 to-purple-600'
+            },
+            Shopping: { 
+              ...getCategoryData('Shopping'),
+              icon: ShoppingBag,
+              color: 'from-pink-400 to-pink-600'
+            },
+            Health: { 
+              ...getCategoryData('Health'),
+              icon: Activity,
+              color: 'from-red-400 to-red-600'
+            },
+            Investment: { 
+              ...getCategoryData('Investment'),
+              icon: TrendingUp,
+              color: 'from-green-400 to-emerald-600'
+            }
+          }
+        });
+      }
+      
+      // Then fetch expenses to update the list
+      await fetchExpenses();
       
       const aiResponse = {
         type: 'ai',
-        text: `Expense of ${formatAmount(expense.amount)} from ${expense.category} has been deleted.`,
+        text: result.message,
         time: getCurrentTime()
       };
       setMessages(prev => [...prev, aiResponse]);
+      
+      console.log('✅ Expense deleted and state updated');
+    } else {
+      console.error('❌ Delete failed:', result.error);
     }
-  };
+  } catch (error) {
+    console.error('❌ Error deleting expense:', error);
+  }
+};
 
   const startEditingCategory = (category) => {
     setEditingCategory(category);
     setEditingLimit(budget.categories[category].limit.toString());
   };
 
-  const updateCategoryLimit = (category) => {
+  const updateCategoryLimit = async (category) => {
     const newLimit = parseInt(editingLimit);
     if (newLimit >= 0) {
-      const newBudget = { ...budget };
-      const oldLimit = newBudget.categories[category].limit;
-      newBudget.categories[category].limit = newLimit;
-      newBudget.total = newBudget.total - oldLimit + newLimit;
-      setBudget(newBudget);
+      try {
+        // Calculate new total budget
+        const newBudget = { ...budget };
+        newBudget.categories[category].limit = newLimit;
+        
+        // Calculate total as sum of all category limits
+        const newTotal = Object.values(newBudget.categories).reduce((sum, cat) => sum + cat.limit, 0);
+        
+        const updatedCategories = {};
+        updatedCategories[category] = { limit: newLimit };
+
+        const response = await fetch(`${API_BASE_URL}/budget/${USER_ID}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            totalBudget: newTotal,
+            categories: updatedCategories
+          })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          await fetchBudget();
+        }
+      } catch (error) {
+        console.error('Error updating budget limit:', error);
+      }
     }
     setEditingCategory(null);
   };
@@ -324,16 +924,16 @@ const BudgetManager = () => {
     setAiSuggestions(prev => prev.filter(s => s.id !== id));
   };
 
-  const handleSuggestionAction = (suggestion) => {
+  const handleSuggestionAction = async (suggestion) => {
     let aiResponseText = '';
 
     switch (suggestion.type) {
       case 'investment':
-        aiResponseText = logExpense(suggestion.amount, 'Investment', suggestion.title);
+        aiResponseText = await logExpense(suggestion.amount, 'Investment', suggestion.title);
         aiResponseText = `Great! I've logged your ${formatAmount(suggestion.amount)} investment. ${aiResponseText}`;
         break;
       case 'goal':
-        aiResponseText = logExpense(suggestion.amount, 'Investment', suggestion.title);
+        aiResponseText = await logExpense(suggestion.amount, 'Investment', suggestion.title);
         setCurrentSavings(prev => prev + suggestion.amount);
         aiResponseText = `Awesome! You're ${formatAmount(suggestion.amount)} closer to your goal! I've logged this in your Investments.`;
         break;
@@ -503,7 +1103,7 @@ const BudgetManager = () => {
                       <h3 className="text-xl font-bold text-gray-800">AI-Powered Suggestions</h3>
                     </div>
                     <div className="space-y-3">
-                      {aiSuggestions.map((suggestion, idx) => {
+                      {aiSuggestions.map((suggestion) => {
                         const IconComp = suggestion.icon;
                         return (
                           <div key={suggestion.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all relative">
@@ -523,6 +1123,7 @@ const BudgetManager = () => {
                                 <button 
                                   onClick={() => handleSuggestionAction(suggestion)}
                                   className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+                                  disabled={isLoading}
                                 >
                                   {suggestion.action} →
                                 </button>
@@ -597,17 +1198,20 @@ const BudgetManager = () => {
                     onKeyPress={handleKeyPress}
                     placeholder="Type your expense like 'Spent 250 on lunch' or 'Invested 1000 in stocks'..."
                     className="flex-1 py-4 px-6 bg-gray-50 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200"
+                    disabled={isLoading}
                   />
                   <button
                     onClick={handleSendMessage}
-                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-semibold hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-semibold hover:shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-50"
+                    disabled={isLoading}
                   >
                     <Send size={20} />
-                    Send
+                    {isLoading ? 'Sending...' : 'Send'}
                   </button>
                   <button
                     onClick={handleVoiceClick}
                     className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl hover:shadow-2xl transition-all duration-200 hover:scale-105"
+                    disabled={isLoading}
                   >
                     <Mic size={28} />
                   </button>
@@ -840,6 +1444,19 @@ const BudgetManager = () => {
 
             <div className="flex-1 overflow-y-auto p-8">
               <div className="max-w-4xl mx-auto space-y-6">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-6 border-2 border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Total Monthly Budget</p>
+                      <p className="text-4xl font-bold text-blue-600">{formatAmount(budget.total)}</p>
+                      <p className="text-xs text-gray-500 mt-2">Auto-calculated from category limits</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                      <DollarSign size={32} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-white rounded-3xl p-8 shadow-xl">
                   <h3 className="text-2xl font-bold text-gray-800 mb-6">Category Limits</h3>
                   <div className="space-y-4">
